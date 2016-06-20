@@ -1,0 +1,126 @@
+* Make pdb files for each RESI entry in topology file
+* Writen by Charles Brooks III
+*
+
+read rtf card name "../CGENFF3.0.1/top_all36_cgenff_cb3.rtf"
+read param card name "../CGENFF3.0.1/par_all36_cgenff.prm"
+
+! The following awk script, parseToppar.awk, extracts RESI info
+!{
+!    if($1 == "RESI") {
+!	rname = $2;
+!        # The residue names on the next line are not insteresting because 
+!        # of their size.
+!	if(rname == "CO2" || rname == "CO3" || rname == "AMM1" || 
+!	   rname == "ALF4" || rname == "PEGM" || rname == "FORA"){next}
+!
+!	nres++;
+!	fname = "res_"nres".str";
+!	print "set resname = "rname >fname;
+!        # Look for IC line to extract IC SEED
+!	while($1 != "IC") {getline;}
+!        # Don't use lines with improper ICs
+!	while($1 == "IC" && $0 ~ /\*/) {getline;}
+!        # Process line with IC to make SEED
+!        if($1 == "IC" && $0 !~ /\*/){
+!	    split($0,a);
+!	    seed = "";
+!	    is = 0;
+!	    for(i=2;i<6;i++){
+!		if(a[i] != "BLNK") {
+!		    seed = seed " 1 "a[i];
+!		    is++;if(is==3){i=6}
+!		}
+!	    }
+!	    print "set seed = "seed >>fname;
+!	}
+!	close(fname);
+!    }
+!}
+!END{ print "set nres = "nres >"restot.str"}
+
+system "awk -f parseToppar.awk ../CGENFF3.0.1/top_all36_cgenff_cb3.rtf"
+
+stream restot.str
+
+if @?n eq 0 set n = 1
+label makeres
+
+      stream res_@n.str
+      echo "Processing resname" @resname
+      read sequ @resname 1
+      bomlev -2  ! Needed to overcome problem generatong 3-membered rings
+      generate @resname setup
+      bomlev 0
+
+      ! Find the first three heavy atoms
+      set i = 1
+      set last = 3
+      define heavy select .not. hydrogen end
+      if ?nsel lt 3 set last = ?nsel
+      define slcted select none end
+      label findatoms
+            define atom select .not. ( hydrogen .or. slcted ) end
+            set anum = ?selatom
+            set a@i = ?seltype
+            define slcted select bynu @anum .or. slcted end
+            incr i by 1
+      if @i le @last goto findatoms
+
+      if @last lt 3 then
+            scalar x set 0 select .not. hydrogen end
+            scalar y set 0 select .not. hydrogen end
+            scalar z set 0 select .not. hydrogen end
+            scalar x set 1.5 select type @a2 end
+            hbuild
+            mini sd nstep 100
+      else
+
+      ! These residues have some problems with the IC tables
+      if @resname eq NAD then
+            ic generate
+            set seed 1 @a1 1 @a2 1 @a3
+      endif
+      if @resname eq NADP then
+            ic generate
+            set seed 1 @a1 1 @a2 1 @a3
+      endif
+      if @resname eq THAO ic generate
+      if @resname eq 1EOX then
+            ic generate
+            set seed 1 @a1 1 @a2 1 @a3
+      endif
+      if @resname eq 1BOX then
+            ic generate
+            set seed 1 @a1 1 @a2 1 @a3
+      endif
+
+            bomlev -2 ! Needed because of problems with parameters
+            ic print
+            ic param
+            ic seed @seed
+            ic build
+            hbuild
+            bomlev 0
+      endif
+      define undefined select .not. initialized end
+      if ?nsel gt 0 then
+           print coor select .not. initial end
+           echo Undefined atoms, resname @resname count @n
+           stop
+      endif
+
+      set mini = mini sd nstep 100
+      if @resname eq SAH set mini =
+      @mini
+
+      system "mkdir -p ../structures/@RESNAME"
+      write coor pdb name "../structures/@RESNAME/@RESNAME.pdb"
+      write psf card name "../structures/@RESNAME/@RESNAME.psf"
+      write coor card name "../structures/@RESNAME/@RESNAME.coor"
+      delete atom select all end
+      system "rm res_@N.str"
+      incr n by 1
+if @n le @nres goto makeres
+
+stop
