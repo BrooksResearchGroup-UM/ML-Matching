@@ -1,0 +1,25 @@
+* TITLE
+* Created by Xinqiang Ding (xqding_at_umich.edu)
+* at 2016/06/10 18:28:22
+*
+
+! read the topology and parameter files
+read rtf card name "../../CGENFF3.0.1/top_all36_cgenff_cb3.rtf"
+read param card name "../../CGENFF3.0.1/par_all36_cgenff.prm"
+
+read psf card name "@RESNAME.psf"
+read coor card name "@RESNAME.coor"
+
+open unit 30 write card name "charge.txt"
+outunit 30
+Scalar charge show 
+outunit 6
+close unit 30
+
+open unit 30 write card name "type.txt"
+outunit 30
+Scalar type show 
+outunit 6
+close unit 30
+
+stop
