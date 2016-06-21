@@ -6,7 +6,7 @@ import openbabel as ob
 
 from ReadPara import *
 from ReadMol2s import *
-from ReadPDBs import *
+
 
 # ## read parameter files
 paraFileName = "../CGENFF3.0.1/par_all36_cgenff.prm"
