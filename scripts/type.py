@@ -17,7 +17,7 @@ if (__name__=="__main__"):
     print id
     print ("\n"+"-------------------------------------------------------")
     for atom in ob.OBMolAtomIter(mol2):
-	if atom.IsCarbon():
+	if atom.IsCarbon(): #Can be used for any atom type
            if atom.IsInRing():
         	if atom.IsInRingSize(3):
 		   print (atom.GetType()+"."+"R"+"."+"3")
