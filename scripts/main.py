@@ -1,6 +1,7 @@
 __author__ = "Xinqiang Ding <xqding@umich.edu>"
 __date__ = "2016/06/13 21:54:49"
 
+import numpy as np
 import pandas as pd
 import openbabel as ob
 
@@ -8,6 +9,8 @@ from ReadPara import *
 from ReadMol2s import *
 from LocalAtomTyper import *
 from AtomTyper import *
+from AtomTyper2Binary import *
+
 
 # ## read parameter files
 paraFileName = "../CGENFF3.0.1/par_all36_cgenff.prm"
@@ -65,3 +68,11 @@ for (id, mol2) in mol2s.iteritems():
         if (atom.GetAtomicNum() in [1,6,7,8,15,16,9,17,35,53]):
             localAtomTypes.append(LocalAtomTyper(atom))
             atomTypes.append(AtomTyper(atom))
+
+## sybyl atom types
+sybylAtomTypes = list(set([ i for (i,j) in localAtomTypes]))
+features = []
+for i in atomTypes:
+    features.append(AtomTyper2Binary(i, sybylAtomTypes))
+
+features = np.array(features)
