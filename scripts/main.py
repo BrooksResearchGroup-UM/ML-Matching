@@ -6,7 +6,8 @@ import openbabel as ob
 
 from ReadPara import *
 from ReadMol2s import *
-
+from LocalAtomTyper import *
+from AtomTyper import *
 
 # ## read parameter files
 paraFileName = "../CGENFF3.0.1/par_all36_cgenff.prm"
@@ -54,5 +55,13 @@ for (id, mol2) in mol2s.iteritems():
     tmpType = list(tmpType[0])
     tmpType = [int(k) for k in tmpType]
     charmmAtomType[id] = tmpType
-
 ## done with the cgenff database
+
+## atom types
+localAtomTypes = []
+atomTypes = []
+for (id, mol2) in mol2s.iteritems():
+    for atom in ob.OBMolAtomIter(mol2):
+        if (atom.GetAtomicNum() in [1,6,7,8,15,16,9,17,35,53]):
+            localAtomTypes.append(LocalAtomTyper(atom))
+            atomTypes.append(AtomTyper(atom))
